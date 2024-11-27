@@ -1,0 +1,93 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// Authentication
+model User {
+  id             Int             @id @default(autoincrement())
+  username       String          @unique
+  email          String          @unique
+  password       String
+  socialAccounts SocialAccount[]
+  attendedEvents EventUser[]
+  comments       Comment[]
+  ratings        Rating[]
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  Event          Event[]
+  History        History[]
+}
+
+model SocialAccount {
+  id     Int    @id @default(autoincrement())
+  type   String // Example: "Facebook", "Google", etc.
+  token  String // Authentication token
+  userId Int
+  user   User   @relation(fields: [userId], references: [id])
+}
+
+model Event {
+  id          Int         @id @default(autoincrement())
+  title       String
+  description String
+  date        DateTime
+  time        DateTime
+  location    String
+  organizerId Int
+  organizer   User        @relation(fields: [organizerId], references: [id])
+  attendees   EventUser[]
+  comments    Comment[]
+  ratings     Rating[]
+  History     History[]
+}
+
+model EventUser {
+  id            Int     @id @default(autoincrement())
+  userId        Int
+  eventId       Int
+  user          User    @relation(fields: [userId], references: [id])
+  event         Event   @relation(fields: [eventId], references: [id])
+  attendance    Boolean @default(false) // RSVP status
+  notifications Boolean @default(false) // Notifications received
+}
+
+model Comment {
+  id      Int      @id @default(autoincrement())
+  content String
+  date    DateTime @default(now())
+  userId  Int
+  eventId Int
+  user    User     @relation(fields: [userId], references: [id])
+  event   Event    @relation(fields: [eventId], references: [id])
+}
+
+model Rating {
+  id      Int      @id @default(autoincrement())
+  rating  Int // For example, from 1 to 5
+  comment String? // Optional additional comment
+  date    DateTime @default(now())
+  userId  Int
+  eventId Int
+  user    User     @relation(fields: [userId], references: [id])
+  event   Event    @relation(fields: [eventId], references: [id])
+}
+
+model History {
+  id             Int      @id @default(autoincrement())
+  userId         Int
+  eventId        Int
+  attendanceDate DateTime @default(now())
+  user           User     @relation(fields: [userId], references: [id])
+  event          Event    @relation(fields: [eventId], references: [id])
+}
